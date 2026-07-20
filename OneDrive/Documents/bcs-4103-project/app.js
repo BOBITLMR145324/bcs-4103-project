@@ -2,6 +2,28 @@ const express = require('express');
 const cors = require('cors');
 const pool = require('./db');
 
+// Auto-create 'products' table if it doesn't exist
+const initDB = async () => {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS products (
+        product_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+        sku VARCHAR(100) NOT NULL UNIQUE,
+        name VARCHAR(255) NOT NULL,
+        price NUMERIC(10, 2) NOT NULL,
+        stock_quantity INT DEFAULT 0,
+        attributes JSONB DEFAULT '{}',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    console.log('Database table "products" initialized successfully.');
+  } catch (err) {
+    console.error('Error initializing database table:', err.message);
+  }
+};
+
+initDB();
+
 const app = express();
 
 app.use(cors());
