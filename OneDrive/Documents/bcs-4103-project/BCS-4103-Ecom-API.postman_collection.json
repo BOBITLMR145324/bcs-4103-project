@@ -1,0 +1,111 @@
+{
+  "info": {
+    "_postman_id": "74a5c0ed-334e-4f28-8d55-09ca8aaff4b6",
+    "name": "BCS-4103-Ecom-API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "56711412",
+    "_collection_link": "https://go.postman.co/collection/56711412-74a5c0ed-334e-4f28-8d55-09ca8aaff4b6?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "GET All Products",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/products",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Product",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"sku\": \"SKU-TEXT-BOOK-99\",\r\n  \"name\": \"Advanced Database Management Systems\",\r\n  \"price\": 75.50,\r\n  \"stock_quantity\": 120,\r\n  \"attributes\": {\r\n    \"color\": \"Black\",\r\n    \"edition\": \"2026\",\r\n    \"pages\": 520\r\n  }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/products",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "products"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Product by ID",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:3000/api/products/da207bdb-995d-4542-9d2b-7eb08c33ce7a",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "products",
+            "da207bdb-995d-4542-9d2b-7eb08c33ce7a"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Update Product",
+      "request": {
+        "method": "PUT",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"sku\": \"SKU-TEXT-BOOK-99\",\r\n  \"name\": \"Advanced Database Management Systems (Updated Edition)\",\r\n  \"price\": 79.99,\r\n  \"stock_quantity\": 115,\r\n  \"attributes\": {\r\n    \"color\": \"Black/Gold\",\r\n    \"edition\": \"2026-v2\",\r\n    \"pages\": 535\r\n  }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:3000/api/products/da207bdb-995d-4542-9d2b-7eb08c33ce7a",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "3000",
+          "path": [
+            "api",
+            "products",
+            "da207bdb-995d-4542-9d2b-7eb08c33ce7a"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}
