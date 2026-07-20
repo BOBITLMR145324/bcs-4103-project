@@ -3,15 +3,22 @@ const cors = require('cors');
 const pool = require('./db');
 
 const app = express();
+
 app.use(cors());
 app.use(express.json()); // Allows your server to read incoming JSON data
+
+// 0. HEALTH CHECK ROUTE
+app.get('/', (req, res) => {
+  res.json({ message: 'E-commerce API is live and running!' });
+});
 
 // 1. GET ALL PRODUCTS
 app.get('/api/products', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM products ORDER BY created_at DESC');
+    const result = await pool.query('SELECT * FROM products ORDER BY created_at DESC LIMIT 100');
     res.json(result.rows);
   } catch (err) {
+    console.error('DATABASE ERROR [GET /api/products]:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -21,9 +28,14 @@ app.get('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('SELECT * FROM products WHERE product_id = $1', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ message: 'Product not found' });
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    
     res.json(result.rows[0]);
   } catch (err) {
+    console.error(`DATABASE ERROR [GET /api/products/${req.params.id}]:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -32,12 +44,17 @@ app.get('/api/products/:id', async (req, res) => {
 app.post('/api/products', async (req, res) => {
   try {
     const { sku, name, price, stock_quantity, attributes } = req.body;
+    
+    const attrValue = typeof attributes === 'object' ? JSON.stringify(attributes) : (attributes || '{}');
+
     const result = await pool.query(
       'INSERT INTO products (sku, name, price, stock_quantity, attributes) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [sku, name, price, stock_quantity, JSON.stringify(attributes)]
+      [sku, name, price, stock_quantity, attrValue]
     );
+    
     res.status(201).json(result.rows[0]);
   } catch (err) {
+    console.error('DATABASE ERROR [POST /api/products]:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -47,13 +64,21 @@ app.put('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { sku, name, price, stock_quantity, attributes } = req.body;
+    
+    const attrValue = typeof attributes === 'object' ? JSON.stringify(attributes) : (attributes || '{}');
+
     const result = await pool.query(
       'UPDATE products SET sku = $1, name = $2, price = $3, stock_quantity = $4, attributes = $5 WHERE product_id = $6 RETURNING *',
-      [sku, name, price, stock_quantity, JSON.stringify(attributes), id]
+      [sku, name, price, stock_quantity, attrValue, id]
     );
-    if (result.rows.length === 0) return res.status(404).json({ message: 'Product not found' });
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
     res.json(result.rows[0]);
   } catch (err) {
+    console.error(`DATABASE ERROR [PUT /api/products/${req.params.id}]:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });
@@ -63,9 +88,14 @@ app.delete('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('DELETE FROM products WHERE product_id = $1 RETURNING *', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ message: 'Product not found' });
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
     res.json({ message: 'Product successfully deleted' });
   } catch (err) {
+    console.error(`DATABASE ERROR [DELETE /api/products/${req.params.id}]:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });
