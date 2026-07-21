@@ -1,8 +1,15 @@
 const express = require('express');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsDoc = require('swagger-jsdoc');
 const pool = require('./db');
 
-// Auto-create 'products' table if it doesn't exist
+const app = express();
+
+app.use(cors());
+app.use(express.json()); // Allows server to parse incoming JSON
+
+// --- AUTO-CREATE DATABASE TABLE ---
 const initDB = async () => {
   try {
     await pool.query(`
@@ -24,19 +31,6 @@ const initDB = async () => {
 
 initDB();
 
-const app = express();
-
-app.use(cors());
-app.use(express.json()); // Allows your server to read incoming JSON data
-
-const express = require('express');
-const swaggerUi = require('swagger-ui-express');
-const swaggerJsDoc = require('swagger-jsdoc');
-
-// Standard express setup...
-const app = express();
-app.use(express.json());
-
 // --- SWAGGER UI CONFIGURATION ---
 const swaggerOptions = {
   swaggerDefinition: {
@@ -57,7 +51,7 @@ const swaggerOptions = {
       },
     ],
   },
-  apis: ['./app.js'], // Look for annotations in this file
+  apis: ['./app.js'], // Look for Swagger annotations in this file
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
@@ -89,6 +83,13 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  *           type: object
  */
 
+// --- API ROUTES ---
+
+// 0. Health Check
+app.get('/', (req, res) => {
+  res.json({ message: 'E-commerce API is live and running!' });
+});
+
 /**
  * @swagger
  * /api/products:
@@ -97,18 +98,16 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  *     responses:
  *       200:
  *         description: List of all products in database
- *   post:
- *     summary: Create a new product
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Product'
- *     responses:
- *       201:
- *         description: Product created successfully
  */
+app.get('/api/products', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM products ORDER BY created_at DESC LIMIT 100');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('DATABASE ERROR [GET /api/products]:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 /**
  * @swagger
@@ -126,6 +125,58 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  *         description: Product data retrieved successfully
  *       404:
  *         description: Product not found
+ */
+app.get('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM products WHERE product_id = $1', [id]);
+    
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+    
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error(`DATABASE ERROR [GET /api/products/${req.params.id}]:`, err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/products:
+ *   post:
+ *     summary: Create a new product
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Product'
+ *     responses:
+ *       201:
+ *         description: Product created successfully
+ */
+app.post('/api/products', async (req, res) => {
+  try {
+    const { sku, name, price, stock_quantity, attributes } = req.body;
+    const attrValue = typeof attributes === 'object' ? JSON.stringify(attributes) : (attributes || '{}');
+
+    const result = await pool.query(
+      'INSERT INTO products (sku, name, price, stock_quantity, attributes) VALUES ($1, $2, $3, $4, $5) RETURNING *',
+      [sku, name, price, stock_quantity, attrValue]
+    );
+    
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    console.error('DATABASE ERROR [POST /api/products]:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @swagger
+ * /api/products/{id}:
  *   put:
  *     summary: Update an existing product
  *     parameters:
@@ -143,66 +194,13 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  *     responses:
  *       200:
  *         description: Product updated successfully
+ *       404:
+ *         description: Product not found
  */
-
-// 0. HEALTH CHECK ROUTE
-app.get('/', (req, res) => {
-  res.json({ message: 'E-commerce API is live and running!' });
-});
-
-// 1. GET ALL PRODUCTS
-app.get('/api/products', async (req, res) => {
-  try {
-    const result = await pool.query('SELECT * FROM products ORDER BY created_at DESC LIMIT 100');
-    res.json(result.rows);
-  } catch (err) {
-    console.error('DATABASE ERROR [GET /api/products]:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 2. GET PRODUCT BY ID
-app.get('/api/products/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query('SELECT * FROM products WHERE product_id = $1', [id]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-    
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error(`DATABASE ERROR [GET /api/products/${req.params.id}]:`, err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 3. ADD NEW PRODUCT (Handles JSONB attributes)
-app.post('/api/products', async (req, res) => {
-  try {
-    const { sku, name, price, stock_quantity, attributes } = req.body;
-    
-    const attrValue = typeof attributes === 'object' ? JSON.stringify(attributes) : (attributes || '{}');
-
-    const result = await pool.query(
-      'INSERT INTO products (sku, name, price, stock_quantity, attributes) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [sku, name, price, stock_quantity, attrValue]
-    );
-    
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    console.error('DATABASE ERROR [POST /api/products]:', err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 4. UPDATE EXISTING PRODUCT
 app.put('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { sku, name, price, stock_quantity, attributes } = req.body;
-    
     const attrValue = typeof attributes === 'object' ? JSON.stringify(attributes) : (attributes || '{}');
 
     const result = await pool.query(
@@ -221,7 +219,23 @@ app.put('/api/products/:id', async (req, res) => {
   }
 });
 
-// 5. DELETE A PRODUCT
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   delete:
+ *     summary: Delete a product
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product successfully deleted
+ *       404:
+ *         description: Product not found
+ */
 app.delete('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
