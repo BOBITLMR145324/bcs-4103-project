@@ -85,9 +85,14 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // --- API ROUTES ---
 
-// 0. Health Check
+//HEALTH CHECK ROUTE
+/*app.get('/api/health', (req, res) => {
+  res.json({ status: 'API is running' });
+});*/
+
+// Redirect base URL directly to Swagger documentation UI Instead of showing a blank page/default page
 app.get('/', (req, res) => {
-  res.json({ message: 'E-commerce API is live and running!' });
+  res.redirect('/api-docs');
 });
 
 /**
