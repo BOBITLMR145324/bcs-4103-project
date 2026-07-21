@@ -29,6 +29,122 @@ const app = express();
 app.use(cors());
 app.use(express.json()); // Allows your server to read incoming JSON data
 
+const express = require('express');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsDoc = require('swagger-jsdoc');
+
+// Standard express setup...
+const app = express();
+app.use(express.json());
+
+// --- SWAGGER UI CONFIGURATION ---
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'E-commerce Products API',
+      version: '1.0.0',
+      description: 'RESTful API for managing e-commerce products with PostgreSQL.',
+    },
+    servers: [
+      {
+        url: 'https://bcs-4103-ecom-api.onrender.com',
+        description: 'Render Production Server',
+      },
+      {
+        url: 'http://localhost:10000',
+        description: 'Local Server',
+      },
+    ],
+  },
+  apis: ['./app.js'], // Look for annotations in this file
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Product:
+ *       type: object
+ *       required:
+ *         - sku
+ *         - name
+ *         - price
+ *       properties:
+ *         product_id:
+ *           type: string
+ *           format: uuid
+ *         sku:
+ *           type: string
+ *         name:
+ *           type: string
+ *         price:
+ *           type: number
+ *         stock_quantity:
+ *           type: integer
+ *         attributes:
+ *           type: object
+ */
+
+/**
+ * @swagger
+ * /api/products:
+ *   get:
+ *     summary: Retrieve all products
+ *     responses:
+ *       200:
+ *         description: List of all products in database
+ *   post:
+ *     summary: Create a new product
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Product'
+ *     responses:
+ *       201:
+ *         description: Product created successfully
+ */
+
+/**
+ * @swagger
+ * /api/products/{id}:
+ *   get:
+ *     summary: Get a product by ID
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product data retrieved successfully
+ *       404:
+ *         description: Product not found
+ *   put:
+ *     summary: Update an existing product
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Product'
+ *     responses:
+ *       200:
+ *         description: Product updated successfully
+ */
+
 // 0. HEALTH CHECK ROUTE
 app.get('/', (req, res) => {
   res.json({ message: 'E-commerce API is live and running!' });
