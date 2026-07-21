@@ -295,10 +295,11 @@ Cecilia
 
 **Group Members**
 
-- Student Name 1 – Registration Number
-- Student Name 2 – Registration Number
-- Student Name 3 – Registration Number
-- Student Name 4 – Registration Number
+- BOBITLMR145324 - Samuel Mutuku Ngina
+- 
+- 
+- 
+- 
 
 ---
 
