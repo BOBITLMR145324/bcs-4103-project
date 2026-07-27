@@ -1,263 +1,383 @@
-# E-commerce Products REST API & Database Optimization
+# Horizon Financial — FinTech Product Catalog & Portfolio Engine
 
-[![Node.js](https://img.shields.io/badge/Node.js-v24.x-green.svg)](https://nodejs.org/)
-[![Express.js](https://img.shields.io/badge/Express.js-4.x-lightgrey.svg)](https://expressjs.com/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%2B-blue.svg)](https://www.postgresql.org/)
-[![Swagger](https://img.shields.io/badge/Swagger-OpenAPI%203.0-brightgreen.svg)](https://swagger.io/)
-[![Postman](https://img.shields.io/badge/Postman-Passed-orange.svg)](https://www.postman.com/)
+> **Enterprise-grade financial product catalog and institutional deposit management platform built with Node.js, Express.js, and PostgreSQL.**
 
-An optimized, production-ready **RESTful API** for managing e-commerce product catalogs, customer data, and order processing. Built with **Node.js**, **Express.js**, and **PostgreSQL**, this project features interactive **Swagger UI documentation**, database query optimization, automated triggers, stored procedures, dynamic connection pooling with environment-aware SSL handling, fast dataset batch ingestion, and automated API testing using Postman.
+Horizon Financial is a full-stack financial services application designed to manage institutional deposit prospects and retail portfolio offerings. The platform delivers real-time server-side searching, dynamic filtering, analytical reporting, and complete CRUD operations while maintaining high performance for large datasets through optimized PostgreSQL queries.
 
 ---
 
-# 🚀 Live Deployment & Interactive Documentation
+# 📌 Overview
 
-### 🌐 Live Swagger UI
-https://bcs-4103-ecom-api.onrender.com/api-docs/
+The application provides an enterprise dashboard for managing financial products and institutional investment opportunities with features including:
 
-### 🌍 Base API URL
-https://bcs-4103-ecom-api.onrender.com
-
-> **Note:** Visiting the base URL automatically redirects to the interactive Swagger documentation.
+- Server-side pagination
+- Real-time database search
+- Dynamic filtering
+- Advanced sorting
+- Portfolio analytics
+- CSV exporting
+- Interactive Swagger API documentation
+- Full CRUD functionality
+- PostgreSQL-powered backend
 
 ---
 
-# 📁 Project Structure
+# ✨ Features
+
+## 1. Server-Side Database Pagination
+
+Designed to efficiently handle large datasets without loading every record into the browser.
+
+### Features
+
+- PostgreSQL OFFSET/LIMIT pagination
+- Parameterized SQL queries
+- Configurable page sizes:
+  - 50 items
+  - 100 items
+  - 200 items
+- Previous / Next navigation
+- Direct page jumping
+- Dynamic pagination metadata
+
+---
+
+## 2. Global Full-Database Search
+
+Unlike client-side filtering, searches execute directly against PostgreSQL for maximum scalability.
+
+### Capabilities
+
+- Real-time search across all records
+- PostgreSQL `ILIKE` pattern matching
+- Search by:
+  - Product Name
+  - Institutional Account Name
+  - SKU
+- 350ms debounced search inputs
+- Minimal database load during typing
+
+---
+
+## 3. Dynamic Category Filtering
+
+Server-side category filters instantly update results across the entire database.
+
+Supported categories include:
+
+- MANAGEMENT
+- TECHNICIAN
+- ENTREPRENEUR
+- RETIRED
+
+Filtering remains fully compatible with:
+
+- Pagination
+- Search
+- Sorting
+- CSV Export
+
+---
+
+## 4. Server-Side Sorting
+
+Native PostgreSQL ordering provides fast and secure sorting.
+
+Available sorting options:
+
+- Newest First
+- Highest Balance
+- Lowest Balance
+- Alphabetical
+
+Security features include backend whitelist validation to prevent SQL Injection attacks.
+
+---
+
+## 5. Portfolio Analytics Dashboard
+
+A dedicated analytics endpoint provides live financial metrics.
+
+Endpoint:
+
+```
+GET /api/products/stats
+```
+
+Metrics include:
+
+- Total Database Records
+- Average Portfolio Balance
+- Total Portfolio Value
+- Filtered Result Count
+
+Powered entirely using PostgreSQL aggregate functions:
+
+- COUNT(*)
+- AVG(price)
+- SUM(price)
+
+---
+
+## 6. CSV Data Export
+
+Export filtered datasets with a single click.
+
+Endpoint:
+
+```
+GET /api/products/export
+```
+
+Exports respect active:
+
+- Search query
+- Category filter
+
+Ideal for:
+
+- Reporting
+- Auditing
+- Excel analysis
+- Financial record sharing
+
+---
+
+## 7. Interactive API Documentation
+
+Integrated Swagger UI provides live API testing directly from the browser.
+
+Available at:
+
+```
+/api-docs
+```
+
+Supports:
+
+- OpenAPI 3.0
+- Live endpoint testing
+- Request examples
+- Response schemas
+
+---
+
+# 🏗 Technology Stack
+
+## Backend
+
+- Node.js
+- Express.js
+
+## Database
+
+- PostgreSQL
+- pg (node-postgres)
+- Connection Pooling
+
+## Frontend
+
+- HTML5
+- Tailwind CSS (CDN)
+- Vanilla JavaScript (ES6)
+- Font Awesome 6
+
+## API Documentation
+
+- Swagger UI Express
+- Swagger JSDoc
+- OpenAPI 3.0
+
+---
+
+# 📂 Project Structure
 
 ```text
 bcs-4103-project/
 │
-├── .env
-│   └── Environment variables (Database connection, Port, Environment)
+├── app.js                 # Main Express server & API routes
+├── db.js                  # PostgreSQL connection pool
+├── package.json           # Project dependencies
 │
-├── app.js
-│   └── Main Express application and Swagger configuration
+├── public/
+│   ├── index.html         # Glassmorphism dashboard UI
+│   └── app.js             # Frontend state management & API calls
 │
-├── db.js
-│   └── PostgreSQL connection pool with automatic SSL detection
-│
-├── populate.js
-│   └── Streams and imports 45,200+ real records from the UCI Machine Learning Repository
-│
-├── package.json
-│   └── Project dependencies
-│
-├── package-lock.json
-│
-├── Capacity of the database Query.sql
-│   └── SQL optimization queries, triggers, functions and procedures
-│
-├── BCS-4103-Ecom-API.postman_collection.json
-│   └── Automated Postman test collection
-│
-└── README.md
+└── README.md              # Project documentation
 ```
 
 ---
 
-# ✨ Key Features
+# 📡 API Reference
 
-## 📖 Interactive Swagger UI
+## Portfolio Analytics
 
-- Built using **swagger-ui-express** and **swagger-jsdoc**
-- OpenAPI 3.0 Specification
-- Interactive browser-based API testing
-- Automatically generated documentation from route annotations
-- Live request/response examples
+### Get Global Statistics
 
----
+```http
+GET /api/products/stats
+```
 
-## 📊 Direct Ingestion of Official Machine Learning Dataset
+Returns:
 
-This project integrates directly with the **UCI Machine Learning Repository (Bank Marketing Dataset)**.
-
-Features include:
-
-- Streams CSV data directly over HTTP
-- No temporary file storage required
-- Imports **45,200+ real-world records**
-- SQL multi-row parameterized batch insertion
-- Fast PostgreSQL ingestion
-- Maps dataset values into flexible **JSONB** columns
+- Total Records
+- Average Balance
+- Portfolio Value
+- Filtered Match Count
 
 ---
 
-## 🚀 Complete REST API
+### Export CSV
 
-Supports full CRUD functionality.
+```http
+GET /api/products/export
+```
 
-### Create
+Query Parameters
 
-- Add new products
-- Request validation
-- Automatic SKU uniqueness
-
-### Read
-
-- Retrieve all products
-- Pagination support
-- Retrieve products by ID
-
-### Update
-
-- Update prices
-- Update stock
-- Modify product attributes
-
-### Delete
-
-- Remove obsolete products
+| Parameter | Type | Description |
+|----------|------|-------------|
+| search | string | Search keyword |
+| category | string | Category filter |
 
 ---
 
-## 🗄 PostgreSQL JSONB Support
+## Product Catalog
 
-Products utilize PostgreSQL's **JSONB** datatype to support flexible product metadata.
+### Retrieve Products
 
-Example:
+```http
+GET /api/products
+```
+
+Query Parameters
+
+| Parameter | Description |
+|------------|------------|
+| page | Current page |
+| limit | Page size |
+| search | Search term |
+| category | Category filter |
+| sortBy | Sorting field |
+| sortOrder | ASC / DESC |
+
+---
+
+### Retrieve Single Product
+
+```http
+GET /api/products/:id
+```
+
+Returns one product by UUID.
+
+---
+
+### Create Product
+
+```http
+POST /api/products
+```
+
+Example Request
 
 ```json
 {
-  "source": "UCI Bank Marketing Dataset",
-  "education": "tertiary",
-  "housing_loan": "no",
-  "marital_status": "single"
+  "sku": "SKU-1001",
+  "name": "Corporate Fixed Deposit",
+  "price": 250000,
+  "stock_quantity": 50,
+  "attributes": {
+    "interestRate": "8.5%",
+    "tenure": "12 Months"
+  }
 }
 ```
 
-This enables schema flexibility without requiring database migrations.
-
 ---
 
-## ⚡ Database Optimization & Security
+### Update Product
 
-### Stored Procedures
-
-- Aggregated reporting
-- Inventory analytics
-- Performance optimization
-
-### Database Triggers
-
-Automatic stock management including:
-
-- Inventory validation
-- Stock deduction after order creation
-
-### Smart PostgreSQL Connection Pool
-
-Uses **pg.Pool** with automatic environment detection.
-
-**Development**
-
-- Direct PostgreSQL connection
-- SSL disabled
-
-**Production (Render / OCI / AWS)**
-
-- SSL enabled automatically
-- `rejectUnauthorized: false`
-
----
-
-## 🧪 Automated API Testing
-
-A complete Postman Collection is included.
-
-Tests cover:
-
-- CRUD endpoints
-- Status code validation
-- JSON response validation
-- Environment variables
-- Automated assertions
-
----
-
-# 🛠 Technology Stack
-
-| Technology | Purpose |
-|------------|---------|
-| Node.js | JavaScript Runtime |
-| Express.js | REST API Framework |
-| PostgreSQL | Relational Database |
-| pg | PostgreSQL Driver & Connection Pool |
-| Axios | HTTP Streaming Client |
-| csv-parser | Streaming CSV Processing |
-| Swagger UI Express | Interactive API Documentation |
-| Swagger JSDoc | OpenAPI Documentation Generation |
-| Postman | API Testing |
-| Render | Cloud Deployment |
-| GitHub | Version Control |
-
----
-
-# 🗄 Database Architecture
-
-The application uses a normalized relational schema while leveraging PostgreSQL JSONB for flexible metadata storage.
-
-```text
-+-------------------+       +-------------------+
-|     CUSTOMERS     |       |     PRODUCTS      |
-+-------------------+       +-------------------+
-| customer_id (PK)  |       | product_id (PK)   |
-| first_name        |       | sku (UNIQUE)      |
-| last_name         |       | name              |
-| email (UNIQUE)    |       | price             |
-+---------+---------+       | stock_quantity    |
-          |                 | attributes(JSONB) |
-          |                 +---------+---------+
-          |                           |
-          | 1                         | 1
-          |                           |
-          | N                         | N
-+---------v---------+       +---------v---------+
-|      ORDERS       |       |    ORDER_ITEMS    |
-+-------------------+       +-------------------+
-| order_id (PK)     |       | item_id (PK)      |
-| customer_id (FK)  |       | order_id (FK)     |
-| status            |       | product_id (FK)   |
-| created_at        |       | quantity          |
-+-------------------+       | unit_price        |
-                            +-------------------+
+```http
+PUT /api/products/:id
 ```
 
----
-
-# 📌 API Endpoints
-
-| Method | Endpoint | Description |
-|---------|----------|-------------|
-| GET | `/` | Redirects to Swagger UI |
-| GET | `/api-docs/` | Interactive Swagger Documentation |
-| GET | `/api/products` | Retrieve all products (supports pagination) |
-| GET | `/api/products/:id` | Retrieve a product by ID |
-| POST | `/api/products` | Create a product |
-| PUT | `/api/products/:id` | Update a product |
-| DELETE | `/api/products/:id` | Delete a product |
+Updates an existing product.
 
 ---
 
-# ⚙ Local Setup & Execution
+### Delete Product
+
+```http
+DELETE /api/products/:id
+```
+
+Deletes a product by UUID.
+
+---
+
+# ⚡ Performance Optimizations
+
+- Server-side pagination
+- PostgreSQL query optimization
+- Connection pooling
+- Debounced searching
+- Efficient SQL aggregation
+- Secure parameterized queries
+- SQL injection prevention
+- Lightweight frontend architecture
+
+---
+
+# 🔒 Security
+
+Security measures implemented include:
+
+- Parameterized SQL queries
+- Backend sort-column whitelist validation
+- Input validation
+- UUID-based resource identification
+- Connection pooling
+- RESTful API architecture
+
+---
+
+# 🚀 Getting Started
 
 ## Prerequisites
 
-- Node.js v18+
-- PostgreSQL 15+
+- Node.js v16+
+- PostgreSQL
 
 ---
 
-## 1. Clone the Repository
+## Clone Repository
 
 ```bash
-git clone https://github.com/YOUR_GITHUB_USERNAME/bcs-4103-project.git
+git clone https://github.com/yourusername/horizon-financial.git
 
-cd bcs-4103-project
+cd horizon-financial
 ```
 
 ---
 
-## 2. Install Dependencies
+## Environment Variables
+
+Create a `.env` file in the project root.
+
+```env
+PORT=10000
+
+PGUSER=your_postgres_user
+PGHOST=your_database_host
+PGDATABASE=your_database_name
+PGPASSWORD=your_database_password
+PGPORT=5432
+```
+
+---
+
+## Install Dependencies
 
 ```bash
 npm install
@@ -265,126 +385,102 @@ npm install
 
 ---
 
-## 3. Configure Environment Variables
-
-Create a `.env` file in the project root.
-
-```env
-PORT=10000
-
-DATABASE_URL=postgresql://postgres:password@localhost:5432/ecommerce_db
-
-NODE_ENV=development
-```
-
----
-
-## 4. Populate the Database
-
-Import the UCI Machine Learning dataset.
-
-```bash
-node populate.js
-```
-
-This streams and inserts over **45,200 records** directly into PostgreSQL.
-
----
-
-## 5. Start the API
+## Start Server
 
 ```bash
 node app.js
 ```
 
-Server:
+---
 
-```text
-http://localhost:10000
+## Open the Application
+
+Dashboard
+
+```
+https://bcs-4103-ecom-api.onrender.com
 ```
 
-Swagger UI:
+Swagger Documentation
 
-```text
-http://localhost:10000/api-docs/
+```
+http://localhost:10000/api-docs
 ```
 
 ---
 
-# 🧪 Testing & Validation
+# 📊 Key Capabilities
 
-Import the supplied Postman Collection:
+- Enterprise Financial Dashboard
+- Institutional Deposit Management
+- Product Portfolio Engine
+- Live Database Analytics
+- RESTful API
+- PostgreSQL Integration
+- CSV Reporting
+- Swagger Documentation
+- Full CRUD Operations
+- Real-Time Search
+- Dynamic Filtering
+- Secure Sorting
+- Responsive UI
 
-```text
-BCS-4103-Ecom-API.postman_collection.json
+---
+
+# 📈 Future Enhancements
+
+Potential roadmap items include:
+
+- JWT Authentication
+- Role-Based Access Control (RBAC)
+- Financial Charts & Dashboards
+- Audit Logging
+- Email Notifications
+- Multi-Tenant Support
+- Docker Deployment
+- Kubernetes Support
+- Redis Caching
+- Automated Testing (Jest + Supertest)
+- CI/CD Pipelines
+- Cloud Deployment (Render, Railway, AWS)
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome!
+
+1. Fork the repository
+2. Create a feature branch
+
+```bash
+git checkout -b feature/new-feature
 ```
 
-Run the collection using the **Collection Runner**.
+3. Commit your changes
 
-Validation includes:
+```bash
+git commit -m "Add new feature"
+```
 
-- ✅ 200 OK
-- ✅ 201 Created
-- ✅ 404 Not Found
-- ✅ Payload validation
-- ✅ JSON Schema validation
-- ✅ CRUD endpoint testing
+4. Push your branch
 
----
+```bash
+git push origin feature/new-feature
+```
 
-# 📈 Performance Highlights
-
-- Streams data directly from the UCI Repository
-- Imports over **45,200 records** in seconds
-- Uses parameterized multi-row SQL inserts
-- PostgreSQL connection pooling
-- Environment-aware SSL configuration
-- Optimized JSONB storage
-- Stored procedures for analytics
-- Trigger-based inventory management
-
----
-
-# 👥 Authors
-
-**Course Unit**
-
-**BCS 4103 – Advanced Database Systems**
-
-**Project Title**
-
-Optimizing PostgreSQL Database for Cloud Deployment & Node.js REST API Architecture
-
-**Course Lecturer**
-
-Cecilia
-
-### Group Members
-
-- **BOBITLMR145324** — Samuel Mutuku Ngina
-- **BOBITLMR127024** — Alvin Kuria Macharia
-- **BOBITLMR539523** — Emmanuel Langat
+5. Open a Pull Request
 
 ---
 
 # 📄 License
 
-This repository was developed for **academic evaluation** under the **BCS 4103 – Advanced Database Systems** curriculum.
+Distributed under the **MIT License**.
+
+See the `LICENSE` file for more information.
 
 ---
 
-## ⭐ Acknowledgements
+Enterprise FinTech Product Catalog & Institutional Deposit Management System
 
-- UCI Machine Learning Repository
-- PostgreSQL
-- Node.js
-- Express.js
-- Swagger
-- Postman
-- Render
-
----
-
-## 📬 Contact
-
-For questions regarding this academic project, please contact any of the listed project members or open an issue within the repository.
+Built using **Node.js**, **Express.js**, **PostgreSQL**, and **Tailwind CSS**.
