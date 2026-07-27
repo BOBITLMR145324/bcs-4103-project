@@ -3,110 +3,230 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Horizon Bank & FinTech Store | BCS 4103 Project</title>
+  <title>Horizon FinTech Catalog | KES Storefront</title>
   
-  <!-- Tailwind CSS & FontAwesome -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"/>
   
   <style>
-    /* Custom FinTech Gradient Background communicating Database Contents */
     body {
-      background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
+      background: linear-gradient(135deg, #0b132b 0%, #1c2541 50%, #0b132b 100%);
       color: #f8fafc;
       min-height: 100vh;
     }
     .glass-card {
-      background: rgba(30, 41, 59, 0.7);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(30, 41, 59, 0.75);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .category-chip.active {
+      background-color: #4f46e5;
+      color: #ffffff;
+      border-color: #6366f1;
     }
   </style>
 </head>
 <body class="font-sans antialiased">
 
-  <!-- Header / Navigation -->
-  <header class="glass-card sticky top-0 z-50 px-6 py-4 mb-8">
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 bg-slate-800 border border-indigo-500/50 text-white px-4 py-3 rounded-xl shadow-2xl transition-all duration-300 transform translate-y-20 opacity-0 flex items-center space-x-3">
+    <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+    <span id="toast-msg" class="text-sm font-medium">Action completed</span>
+  </div>
+
+  <!-- Header -->
+  <header class="glass-card sticky top-0 z-40 px-6 py-4 mb-8 shadow-xl">
     <div class="max-w-7xl mx-auto flex justify-between items-center">
       <div class="flex items-center space-x-3">
-        <div class="p-2.5 bg-indigo-600 rounded-xl text-white font-bold">
-          <i class="fa-solid fa-building-columns text-xl"></i>
+        <div class="p-2.5 bg-indigo-600 rounded-xl text-white font-bold shadow-lg shadow-indigo-500/30">
+          <i class="fa-solid fa-vault text-xl"></i>
         </div>
         <div>
           <h1 class="font-extrabold text-xl tracking-wide bg-gradient-to-r from-blue-400 to-indigo-300 bg-clip-text text-transparent">
-            Horizon FinTech Store
+            Horizon Financial
           </h1>
-          <p class="text-xs text-slate-400">UCI Bank Marketing Catalog Live Feed</p>
+          <p class="text-xs text-slate-400">Institutional Deposit & Retail Portfolios (KES Catalog)</p>
         </div>
       </div>
 
-      <div class="flex items-center space-x-4">
-        <a href="/api-docs" target="_blank" class="text-sm px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-indigo-500/30 transition">
-          <i class="fa-solid fa-code text-xs mr-1"></i> Swagger API Docs
+      <div class="flex items-center space-x-3">
+        <button id="export-csv-btn" class="text-sm px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 border border-emerald-500/30 transition">
+          <i class="fa-solid fa-file-csv mr-1"></i> Export CSV
+        </button>
+        <a href="/api-docs" target="_blank" class="text-sm px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-indigo-500/30 transition">
+          <i class="fa-solid fa-code text-xs mr-1"></i> API Docs
         </a>
-        <button id="add-product-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-4 py-2 rounded-lg text-sm shadow-lg shadow-indigo-500/20 transition">
-          <i class="fa-solid fa-plus mr-1"></i> Add Product
+        <button id="add-product-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-4 py-2 rounded-xl text-sm shadow-lg shadow-indigo-500/25 transition">
+          <i class="fa-solid fa-plus mr-1.5"></i> Add Product
         </button>
       </div>
     </div>
   </header>
 
-  <!-- Hero Section Communicating Database Contents -->
-  <section class="max-w-7xl mx-auto px-6 mb-10">
-    <div class="glass-card rounded-2xl p-8 relative overflow-hidden">
-      <div class="relative z-10">
-        <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-xs font-semibold uppercase tracking-wider">
-          PostgreSQL Real-Time Analytics
-        </span>
-        <h2 class="text-3xl font-extrabold mt-3 text-white">45,200+ UCI Bank Marketing Catalog Offerings</h2>
-        <p class="text-slate-300 mt-2 max-w-2xl text-sm">
-          Displaying term deposits, deposit accounts, and client portfolios populated directly from PostgreSQL JSONB tables. Filter, manage, and execute CRUD operations live.
-        </p>
+  <!-- Database Global Statistics Section -->
+  <section class="max-w-7xl mx-auto px-6 mb-8">
+    <div class="glass-card rounded-2xl p-6 shadow-2xl">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-700/60 pb-6 mb-6">
+        <div>
+          <span class="px-3 py-1 bg-indigo-500/20 text-indigo-300 rounded-full text-xs font-semibold uppercase tracking-wider">
+            PostgreSQL Live Database
+          </span>
+          <h2 class="text-2xl font-extrabold mt-2 text-white">Full Product Catalog (KES)</h2>
+        </div>
+      </div>
 
-        <!-- Stats Bar -->
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <span class="text-xs text-slate-400">Total Live Products</span>
-            <p id="stat-total" class="text-2xl font-bold text-blue-400">Loading...</p>
-          </div>
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <span class="text-xs text-slate-400">Avg. Balance / Price</span>
-            <p id="stat-avg-price" class="text-2xl font-bold text-emerald-400">Loading...</p>
-          </div>
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <span class="text-xs text-slate-400">Dataset Origin</span>
-            <p class="text-lg font-semibold text-purple-300">UCI Repository</p>
-          </div>
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <span class="text-xs text-slate-400">Backend API Status</span>
-            <p class="text-lg font-semibold text-emerald-400"><i class="fa-solid fa-circle text-xs mr-1"></i> Online</p>
-          </div>
+      <!-- Stat Cards -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-700/40">
+          <span class="text-xs text-slate-400 font-medium">Total Database Records</span>
+          <p id="stat-total-db" class="text-2xl font-bold text-blue-400 mt-1">...</p>
+        </div>
+        <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-700/40">
+          <span class="text-xs text-slate-400 font-medium">Global DB Avg Balance</span>
+          <p id="stat-avg-price-db" class="text-2xl font-bold text-emerald-400 mt-1">...</p>
+        </div>
+        <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-700/40">
+          <span class="text-xs text-slate-400 font-medium">Total Portfolio Value</span>
+          <p id="stat-sum-value" class="text-2xl font-bold text-purple-400 mt-1">...</p>
+        </div>
+        <div class="p-4 bg-slate-900/60 rounded-xl border border-slate-700/40">
+          <span class="text-xs text-slate-400 font-medium">Filtered Matches</span>
+          <p id="stat-filtered-count" class="text-2xl font-bold text-indigo-400 mt-1">...</p>
         </div>
       </div>
     </div>
   </section>
 
-  <!-- Product Search & Grid -->
+  <!-- Server-Side Search & Filter Bar -->
   <main class="max-w-7xl mx-auto px-6 pb-16">
-    <div class="flex justify-between items-center mb-6">
-      <h3 class="text-xl font-bold text-white flex items-center">
-        <i class="fa-solid fa-layer-group text-indigo-400 mr-2"></i> Catalog Offerings
-      </h3>
-      <input type="text" id="search-input" placeholder="Search product SKU or title..." 
-             class="px-4 py-2 bg-slate-800 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-indigo-500 text-white w-72">
+    <div class="glass-card rounded-2xl p-5 mb-8">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-4">
+        <h3 class="text-base font-bold text-white flex items-center">
+          <i class="fa-solid fa-magnifying-glass text-indigo-400 mr-2"></i> Database-Wide Search
+        </h3>
+        
+        <div class="flex items-center space-x-3 w-full md:w-auto">
+          <!-- Realtime DB Search -->
+          <div class="relative w-full md:w-72">
+            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-slate-400 text-xs"></i>
+            <input type="text" id="search-input" placeholder="Search entire DB (Title, SKU)..." 
+                   class="w-full pl-9 pr-4 py-2 bg-slate-800/90 border border-slate-700 rounded-xl text-xs focus:outline-none focus:border-indigo-500 text-white">
+          </div>
+
+          <!-- Sorting Selector -->
+          <select id="sort-select" class="bg-slate-800 border border-slate-700 rounded-xl text-xs text-white px-3 py-2 focus:outline-none focus:border-indigo-500">
+            <option value="created_at-desc">Newest First</option>
+            <option value="price-desc">Highest Balance First</option>
+            <option value="price-asc">Lowest Balance First</option>
+            <option value="name-asc">Name (A-Z)</option>
+          </select>
+
+          <!-- Per Page Selector -->
+          <select id="limit-select" class="bg-slate-800 border border-slate-700 rounded-xl text-xs text-white px-3 py-2 focus:outline-none focus:border-indigo-500">
+            <option value="50">50 / page</option>
+            <option value="100" selected>100 / page</option>
+            <option value="200">200 / page</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Quick Grouping Category Chips -->
+      <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-700/50" id="category-chips">
+        <button data-cat="ALL" class="category-chip active px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 hover:border-indigo-500 transition">
+          All Database Records
+        </button>
+        <button data-cat="MANAGEMENT" class="category-chip px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 hover:border-indigo-500 transition">Management</button>
+        <button data-cat="TECHNICIAN" class="category-chip px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 hover:border-indigo-500 transition">Technician</button>
+        <button data-cat="ENTREPRENEUR" class="category-chip px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 hover:border-indigo-500 transition">Entrepreneur</button>
+        <button data-cat="BLUE-COLLAR" class="category-chip px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 hover:border-indigo-500 transition">Blue-Collar</button>
+        <button data-cat="RETIRED" class="category-chip px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 hover:border-indigo-500 transition">Retired</button>
+        <button data-cat="SERVICES" class="category-chip px-3 py-1.5 rounded-lg text-xs font-semibold bg-slate-800 border border-slate-700 hover:border-indigo-500 transition">Services</button>
+      </div>
     </div>
 
-    <!-- Dynamic Product Cards Grid -->
-    <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Loading Spinner -->
+    <!-- Product Cards Grid -->
+    <div id="product-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       <div class="col-span-full text-center py-16">
         <i class="fa-solid fa-circle-notch fa-spin text-4xl text-indigo-500 mb-3"></i>
-        <p class="text-slate-400">Fetching products from PostgreSQL database...</p>
+        <p class="text-slate-400 text-sm">Querying PostgreSQL database...</p>
+      </div>
+    </div>
+
+    <!-- Pagination Controls Bar -->
+    <div class="glass-card rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-4">
+      <span id="page-info" class="text-xs text-slate-400 font-medium">Page 1 of ...</span>
+      
+      <div class="flex items-center space-x-2" id="pagination-controls">
+        <button id="prev-page-btn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 rounded-xl text-xs font-semibold transition border border-slate-700">
+          <i class="fa-solid fa-chevron-left mr-1"></i> Previous
+        </button>
+        
+        <div id="page-numbers" class="flex space-x-1"></div>
+
+        <button id="next-page-btn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-200 rounded-xl text-xs font-semibold transition border border-slate-700">
+          Next <i class="fa-solid fa-chevron-right ml-1"></i>
+        </button>
       </div>
     </div>
   </main>
 
-  <!-- Frontend JavaScript -->
+  <!-- Add/Edit Modal -->
+  <div id="product-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center z-50 p-4">
+    <div class="glass-card rounded-2xl w-full max-w-lg p-6 shadow-2xl relative border border-slate-700">
+      <div class="flex justify-between items-center mb-5 pb-3 border-b border-slate-700">
+        <h3 id="modal-title" class="text-lg font-bold text-white"><i class="fa-solid fa-plus-circle text-indigo-400 mr-2"></i> Add Offering</h3>
+        <button id="close-modal-btn" class="text-slate-400 hover:text-white transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+
+      <form id="add-product-form" class="space-y-4">
+        <input type="hidden" id="form-id" value="" />
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">SKU / Code</label>
+          <input type="text" id="form-sku" required placeholder="e.g. BANK-CUST-999" class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-300 mb-1">Title / Account Name</label>
+          <input type="text" id="form-name" required placeholder="e.g. Term Deposit Prospect - EXECUTIVE" class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500">
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Balance / Price (KES)</label>
+            <input type="number" step="0.01" id="form-price" required placeholder="15000.00" class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Target Term / Stock</label>
+            <input type="number" id="form-stock" required placeholder="12" class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Education Level</label>
+            <select id="form-education" class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500">
+              <option value="tertiary">Tertiary</option>
+              <option value="secondary">Secondary</option>
+              <option value="primary">Primary</option>
+              <option value="unknown">Unknown</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Marital Status</label>
+            <select id="form-marital" class="w-full px-3.5 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white focus:outline-none focus:border-indigo-500">
+              <option value="married">Married</option>
+              <option value="single">Single</option>
+              <option value="divorced">Divorced</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="pt-4 flex justify-end space-x-3">
+          <button type="button" id="cancel-modal-btn" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium rounded-xl transition">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-xl shadow-lg shadow-indigo-500/20 transition">Save Offering</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script src="/app.js"></script>
 </body>
 </html>

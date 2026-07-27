@@ -7,8 +7,7 @@ const pool = require('./db');
 const app = express();
 
 app.use(cors());
-app.use(express.json()); // Allows server to parse incoming JSON
-// Serve static frontend assets from the 'public' folder
+app.use(express.json());
 app.use(express.static('public'));
 
 // --- AUTO-CREATE DATABASE TABLE ---
@@ -33,231 +32,176 @@ const initDB = async () => {
 
 initDB();
 
-// --- SWAGGER UI CONFIGURATION ---
-const swaggerOptions = {
-  swaggerDefinition: {
-    openapi: '3.0.0',
-    info: {
-      title: 'E-commerce Products API',
-      version: '1.0.0',
-      description: 'RESTful API for managing e-commerce products with PostgreSQL.',
-    },
-    servers: [
-      {
-        url: 'https://bcs-4103-ecom-api.onrender.com',
-        description: 'Render Production Server',
-      },
-      {
-        url: 'http://localhost:10000',
-        description: 'Local Server',
-      },
-    ],
-  },
-  apis: ['./app.js'], // Look for Swagger annotations in this file
-};
-
-const swaggerDocs = swaggerJsDoc(swaggerOptions);
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
-
-/**
- * @swagger
- * components:
- *   schemas:
- *     Product:
- *       type: object
- *       required:
- *         - sku
- *         - name
- *         - price
- *       properties:
- *         product_id:
- *           type: string
- *           format: uuid
- *         sku:
- *           type: string
- *         name:
- *           type: string
- *         price:
- *           type: number
- *         stock_quantity:
- *           type: integer
- *         attributes:
- *           type: object
- */
-
-// --- API ROUTES ---
-
-//HEALTH CHECK ROUTE
-/*app.get('/api/health', (req, res) => {
-  res.json({ status: 'API is running' });
-});*/
-
-// Redirect base URL directly to Swagger documentation UI Instead of showing a blank page/default page
+// Redirect base URL directly to Swagger documentation UI
 app.get('/', (req, res) => {
   res.redirect('/api-docs');
 });
 
-/**
- * @swagger
- * /api/products:
- *   get:
- *     summary: Retrieve all products
- *     responses:
- *       200:
- *         description: List of all products in database
- */
+// --- GLOBAL DATABASE STATS ENDPOINT ---
+app.get('/api/products/stats', async (req, res) => {
+  try {
+    const statsResult = await pool.query(`
+      SELECT 
+        COUNT(*) AS total_records,
+        COALESCE(AVG(price), 0) AS avg_balance,
+        COALESCE(SUM(price), 0) AS total_portfolio_value
+      FROM products
+    `);
+    res.json(statsResult.rows[0]);
+  } catch (err) {
+    console.error('DATABASE ERROR [GET /api/products/stats]:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- CSV EXPORT ENDPOINT ---
+app.get('/api/products/export', async (req, res) => {
+  try {
+    const { search = '', category = 'ALL' } = req.query;
+    let whereClauses = [];
+    let queryParams = [];
+
+    if (search.trim() !== '') {
+      queryParams.push(`%${search.trim()}%`);
+      whereClauses.push(`(name ILIKE $${queryParams.length} OR sku ILIKE $${queryParams.length})`);
+    }
+
+    if (category !== 'ALL') {
+      queryParams.push(`%${category}%`);
+      whereClauses.push(`name ILIKE $${queryParams.length}`);
+    }
+
+    const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+    const query = `SELECT sku, name, price, stock_quantity, created_at FROM products ${whereSQL} ORDER BY created_at DESC`;
+
+    const result = await pool.query(query, queryParams);
+
+    // Build CSV Content
+    let csv = 'SKU,Name,Balance (KES),Term (Months),Created At\n';
+    result.rows.forEach(row => {
+      csv += `"${row.sku}","${row.name.replace(/"/g, '""')}",${row.price},${row.stock_quantity},"${row.created_at}"\n`;
+    });
+
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', 'attachment; filename="products_export.csv"');
+    res.status(200).send(csv);
+  } catch (err) {
+    console.error('DATABASE ERROR [GET /api/products/export]:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// --- PAGINATED, SEARCHABLE, SORTABLE PRODUCTS ENDPOINT ---
 app.get('/api/products', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM products ORDER BY created_at DESC LIMIT 100');
-    res.json(result.rows);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = (page - 1) * limit;
+    const search = req.query.search || '';
+    const category = req.query.category || 'ALL';
+    const sortBy = req.query.sortBy || 'created_at';
+    const sortOrder = req.query.sortOrder === 'asc' ? 'ASC' : 'DESC';
+
+    // Allowed sort columns to prevent SQL injection
+    const allowedSortCols = ['created_at', 'price', 'name', 'sku'];
+    const safeSortBy = allowedSortCols.includes(sortBy) ? sortBy : 'created_at';
+
+    let whereClauses = [];
+    let queryParams = [];
+
+    if (search.trim() !== '') {
+      queryParams.push(`%${search.trim()}%`);
+      whereClauses.push(`(name ILIKE $${queryParams.length} OR sku ILIKE $${queryParams.length})`);
+    }
+
+    if (category !== 'ALL') {
+      queryParams.push(`%${category}%`);
+      whereClauses.push(`name ILIKE $${queryParams.length}`);
+    }
+
+    const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    // Count Total Filtered Matches
+    const countQuery = `SELECT COUNT(*) FROM products ${whereSQL}`;
+    const countResult = await pool.query(countQuery, queryParams);
+    const totalProducts = parseInt(countResult.rows[0].count);
+
+    // Fetch Paginated Results
+    const dataQueryParams = [...queryParams, limit, offset];
+    const dataQuery = `
+      SELECT * FROM products 
+      ${whereSQL} 
+      ORDER BY ${safeSortBy} ${sortOrder} 
+      LIMIT $${dataQueryParams.length - 1} OFFSET $${dataQueryParams.length}
+    `;
+
+    const result = await pool.query(dataQuery, dataQueryParams);
+
+    res.json({
+      totalProducts,
+      totalPages: Math.ceil(totalProducts / limit) || 1,
+      currentPage: page,
+      limit,
+      products: result.rows
+    });
   } catch (err) {
     console.error('DATABASE ERROR [GET /api/products]:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-/**
- * @swagger
- * /api/products/{id}:
- *   get:
- *     summary: Get a product by ID
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Product data retrieved successfully
- *       404:
- *         description: Product not found
- */
+// --- INDIVIDUAL PRODUCT CRUD ENDPOINTS ---
 app.get('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('SELECT * FROM products WHERE product_id = $1', [id]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-    
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Product not found' });
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(`DATABASE ERROR [GET /api/products/${req.params.id}]:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-/**
- * @swagger
- * /api/products:
- *   post:
- *     summary: Create a new product
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Product'
- *     responses:
- *       201:
- *         description: Product created successfully
- */
 app.post('/api/products', async (req, res) => {
   try {
     const { sku, name, price, stock_quantity, attributes } = req.body;
     const attrValue = typeof attributes === 'object' ? JSON.stringify(attributes) : (attributes || '{}');
-
     const result = await pool.query(
       'INSERT INTO products (sku, name, price, stock_quantity, attributes) VALUES ($1, $2, $3, $4, $5) RETURNING *',
       [sku, name, price, stock_quantity, attrValue]
     );
-    
     res.status(201).json(result.rows[0]);
   } catch (err) {
-    console.error('DATABASE ERROR [POST /api/products]:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-/**
- * @swagger
- * /api/products/{id}:
- *   put:
- *     summary: Update an existing product
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             $ref: '#/components/schemas/Product'
- *     responses:
- *       200:
- *         description: Product updated successfully
- *       404:
- *         description: Product not found
- */
 app.put('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const { sku, name, price, stock_quantity, attributes } = req.body;
     const attrValue = typeof attributes === 'object' ? JSON.stringify(attributes) : (attributes || '{}');
-
     const result = await pool.query(
       'UPDATE products SET sku = $1, name = $2, price = $3, stock_quantity = $4, attributes = $5 WHERE product_id = $6 RETURNING *',
       [sku, name, price, stock_quantity, attrValue, id]
     );
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Product not found' });
     res.json(result.rows[0]);
   } catch (err) {
-    console.error(`DATABASE ERROR [PUT /api/products/${req.params.id}]:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-/**
- * @swagger
- * /api/products/{id}:
- *   delete:
- *     summary: Delete a product
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *     responses:
- *       200:
- *         description: Product successfully deleted
- *       404:
- *         description: Product not found
- */
 app.delete('/api/products/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query('DELETE FROM products WHERE product_id = $1 RETURNING *', [id]);
-    
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Product not found' });
-    }
-
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Product not found' });
     res.json({ message: 'Product successfully deleted' });
   } catch (err) {
-    console.error(`DATABASE ERROR [DELETE /api/products/${req.params.id}]:`, err.message);
     res.status(500).json({ error: err.message });
   }
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log(`Backend server running on port ${PORT}`));
