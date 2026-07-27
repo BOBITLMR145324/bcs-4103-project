@@ -8,6 +8,8 @@ const app = express();
 
 app.use(cors());
 app.use(express.json()); // Allows server to parse incoming JSON
+// Serve static frontend assets from the 'public' folder
+app.use(express.static('public'));
 
 // --- AUTO-CREATE DATABASE TABLE ---
 const initDB = async () => {
