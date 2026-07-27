@@ -6,30 +6,50 @@
 [![Swagger](https://img.shields.io/badge/Swagger-OpenAPI%203.0-brightgreen.svg)](https://swagger.io/)
 [![Postman](https://img.shields.io/badge/Postman-Passed-orange.svg)](https://www.postman.com/)
 
-An optimized, production-ready RESTful API for managing e-commerce product catalogs, customer data, and order processing. Built with **Node.js**, **Express.js**, and **PostgreSQL**, this project features interactive **Swagger UI documentation**, database query optimization, automated triggers, stored procedures, connection pooling, and Postman automated testing.
+An optimized, production-ready **RESTful API** for managing e-commerce product catalogs, customer data, and order processing. Built with **Node.js**, **Express.js**, and **PostgreSQL**, this project features interactive **Swagger UI documentation**, database query optimization, automated triggers, stored procedures, dynamic connection pooling with environment-aware SSL handling, fast dataset batch ingestion, and automated API testing using Postman.
 
 ---
 
 # 🚀 Live Deployment & Interactive Documentation
 
-- **Live Swagger UI:** https://bcs-4103-ecom-api.onrender.com/api-docs/
-- **Base API URL:** https://bcs-4103-ecom-api.onrender.com
+### 🌐 Live Swagger UI
+https://bcs-4103-ecom-api.onrender.com/api-docs/
 
-> **Note:** Opening the base URL automatically redirects to the interactive Swagger documentation.
+### 🌍 Base API URL
+https://bcs-4103-ecom-api.onrender.com
+
+> **Note:** Visiting the base URL automatically redirects to the interactive Swagger documentation.
 
 ---
 
 # 📁 Project Structure
 
+```text
 bcs-4103-project/
 │
-├── .env                                        # Environment variables
-├── app.js                                      # Main Express application & Swagger setup
-├── db.js                                       # PostgreSQL connection pool
-├── populate.js                                 # Seeds 10,000+ database records
-├── package.json                                # Project dependencies
-├── package-lock.json                           # Dependency lock file
-├── BCS-4103-Ecom-API.postman_collection.json   # Postman API Collection
+├── .env
+│   └── Environment variables (Database connection, Port, Environment)
+│
+├── app.js
+│   └── Main Express application and Swagger configuration
+│
+├── db.js
+│   └── PostgreSQL connection pool with automatic SSL detection
+│
+├── populate.js
+│   └── Streams and imports 45,200+ real records from the UCI Machine Learning Repository
+│
+├── package.json
+│   └── Project dependencies
+│
+├── package-lock.json
+│
+├── Capacity of the database Query.sql
+│   └── SQL optimization queries, triggers, functions and procedures
+│
+├── BCS-4103-Ecom-API.postman_collection.json
+│   └── Automated Postman test collection
+│
 └── README.md
 ```
 
@@ -37,83 +57,120 @@ bcs-4103-project/
 
 # ✨ Key Features
 
-## Interactive Swagger UI
+## 📖 Interactive Swagger UI
 
-- Built with **swagger-ui-express**
-- OpenAPI 3.0 documentation
-- Test API endpoints directly from your browser
-- Automatically generated from Swagger annotations
-
----
-
-## Full REST API
-
-Supports complete CRUD operations:
-
-- Create Products
-- Read Products
-- Update Products
-- Delete Products
+- Built using **swagger-ui-express** and **swagger-jsdoc**
+- OpenAPI 3.0 Specification
+- Interactive browser-based API testing
+- Automatically generated documentation from route annotations
+- Live request/response examples
 
 ---
 
-## PostgreSQL JSONB Support
+## 📊 Direct Ingestion of Official Machine Learning Dataset
 
-Products include an **attributes** column using PostgreSQL JSONB for flexible product metadata.
+This project integrates directly with the **UCI Machine Learning Repository (Bank Marketing Dataset)**.
+
+Features include:
+
+- Streams CSV data directly over HTTP
+- No temporary file storage required
+- Imports **45,200+ real-world records**
+- SQL multi-row parameterized batch insertion
+- Fast PostgreSQL ingestion
+- Maps dataset values into flexible **JSONB** columns
+
+---
+
+## 🚀 Complete REST API
+
+Supports full CRUD functionality.
+
+### Create
+
+- Add new products
+- Request validation
+- Automatic SKU uniqueness
+
+### Read
+
+- Retrieve all products
+- Pagination support
+- Retrieve products by ID
+
+### Update
+
+- Update prices
+- Update stock
+- Modify product attributes
+
+### Delete
+
+- Remove obsolete products
+
+---
+
+## 🗄 PostgreSQL JSONB Support
+
+Products utilize PostgreSQL's **JSONB** datatype to support flexible product metadata.
 
 Example:
 
 ```json
 {
-  "color": "Black",
-  "weight": "2kg",
-  "category": "Electronics"
+  "source": "UCI Bank Marketing Dataset",
+  "education": "tertiary",
+  "housing_loan": "no",
+  "marital_status": "single"
 }
 ```
 
+This enables schema flexibility without requiring database migrations.
+
 ---
 
-## Database Optimization
+## ⚡ Database Optimization & Security
 
 ### Stored Procedures
 
-Precompiled PostgreSQL procedures for reporting and analytics.
+- Aggregated reporting
+- Inventory analytics
+- Performance optimization
 
-### Triggers
+### Database Triggers
 
-Automatic inventory stock reduction whenever an order is created.
+Automatic stock management including:
 
-### Indexing
+- Inventory validation
+- Stock deduction after order creation
 
-- Composite indexes
-- GIN indexes
-- Optimized JSONB searching
-- Faster query execution
+### Smart PostgreSQL Connection Pool
 
----
+Uses **pg.Pool** with automatic environment detection.
 
-## Large Scale Dataset
+**Development**
 
-The project includes a database seeding script that generates more than **10,000 records**, including:
+- Direct PostgreSQL connection
+- SSL disabled
 
-- Customers
-- Products
-- Orders
-- Order Items
+**Production (Render / OCI / AWS)**
 
-This provides realistic benchmarking and performance testing.
-
----
-
-## Connection Pooling
-
-Uses the **pg** PostgreSQL driver with connection pooling for efficient database connections.
+- SSL enabled automatically
+- `rejectUnauthorized: false`
 
 ---
 
-## Automated API Testing
+## 🧪 Automated API Testing
 
-Includes a complete Postman Collection Runner test suite with dynamic environment variables.
+A complete Postman Collection is included.
+
+Tests cover:
+
+- CRUD endpoints
+- Status code validation
+- JSON response validation
+- Environment variables
+- Automated assertions
 
 ---
 
@@ -121,12 +178,14 @@ Includes a complete Postman Collection Runner test suite with dynamic environmen
 
 | Technology | Purpose |
 |------------|---------|
-| Node.js | Runtime Environment |
+| Node.js | JavaScript Runtime |
 | Express.js | REST API Framework |
-| PostgreSQL | Database |
-| pg | PostgreSQL Driver |
+| PostgreSQL | Relational Database |
+| pg | PostgreSQL Driver & Connection Pool |
+| Axios | HTTP Streaming Client |
+| csv-parser | Streaming CSV Processing |
 | Swagger UI Express | Interactive API Documentation |
-| Swagger JSDoc | OpenAPI Specification |
+| Swagger JSDoc | OpenAPI Documentation Generation |
 | Postman | API Testing |
 | Render | Cloud Deployment |
 | GitHub | Version Control |
@@ -135,7 +194,7 @@ Includes a complete Postman Collection Runner test suite with dynamic environmen
 
 # 🗄 Database Architecture
 
-The project uses four normalized relational tables.
+The application uses a normalized relational schema while leveraging PostgreSQL JSONB for flexible metadata storage.
 
 ```text
 +-------------------+       +-------------------+
@@ -171,24 +230,24 @@ The project uses four normalized relational tables.
 |---------|----------|-------------|
 | GET | `/` | Redirects to Swagger UI |
 | GET | `/api-docs/` | Interactive Swagger Documentation |
-| GET | `/api/products` | Retrieve all products |
+| GET | `/api/products` | Retrieve all products (supports pagination) |
 | GET | `/api/products/:id` | Retrieve a product by ID |
-| POST | `/api/products` | Create a new product |
+| POST | `/api/products` | Create a product |
 | PUT | `/api/products/:id` | Update a product |
 | DELETE | `/api/products/:id` | Delete a product |
 
 ---
 
-# ⚙ Local Installation
+# ⚙ Local Setup & Execution
 
 ## Prerequisites
 
-- Node.js (v18 or higher)
+- Node.js v18+
 - PostgreSQL 15+
 
 ---
 
-## 1. Clone Repository
+## 1. Clone the Repository
 
 ```bash
 git clone https://github.com/YOUR_GITHUB_USERNAME/bcs-4103-project.git
@@ -213,102 +272,119 @@ Create a `.env` file in the project root.
 ```env
 PORT=10000
 
-DATABASE_URL=postgresql://username:password@localhost:5432/ecommerce_db
+DATABASE_URL=postgresql://postgres:password@localhost:5432/ecommerce_db
+
+NODE_ENV=development
 ```
 
 ---
 
-## 4. Seed the Database
+## 4. Populate the Database
 
-Populate the database with over **10,000 benchmark records**.
+Import the UCI Machine Learning dataset.
 
 ```bash
 node populate.js
 ```
 
+This streams and inserts over **45,200 records** directly into PostgreSQL.
+
 ---
 
-## 5. Start the Server
+## 5. Start the API
 
 ```bash
 node app.js
 ```
 
-The API will start on:
+Server:
 
-```
+```text
 http://localhost:10000
 ```
 
-Swagger UI will be available at:
+Swagger UI:
 
-```
+```text
 http://localhost:10000/api-docs/
 ```
 
 ---
 
-# 🧪 Testing
+# 🧪 Testing & Validation
 
-Run API tests using the included Postman Collection.
+Import the supplied Postman Collection:
 
-```
+```text
 BCS-4103-Ecom-API.postman_collection.json
 ```
 
-The collection includes automated tests for:
+Run the collection using the **Collection Runner**.
 
-- GET endpoints
-- POST endpoints
-- PUT endpoints
-- DELETE endpoints
+Validation includes:
 
----
-
-# 📊 Performance Features
-
-- PostgreSQL Connection Pooling
-- JSONB Query Optimization
-- Composite Indexes
-- GIN Indexes
-- Stored Procedures
-- Database Triggers
-- Large-scale Benchmark Dataset
-- Production-ready REST API
-- Interactive Swagger Documentation
+- ✅ 200 OK
+- ✅ 201 Created
+- ✅ 404 Not Found
+- ✅ Payload validation
+- ✅ JSON Schema validation
+- ✅ CRUD endpoint testing
 
 ---
 
-# 👥 Authors & Contributors
+# 📈 Performance Highlights
 
-**Unit Code**
+- Streams data directly from the UCI Repository
+- Imports over **45,200 records** in seconds
+- Uses parameterized multi-row SQL inserts
+- PostgreSQL connection pooling
+- Environment-aware SSL configuration
+- Optimized JSONB storage
+- Stored procedures for analytics
+- Trigger-based inventory management
+
+---
+
+# 👥 Authors
+
+**Course Unit**
 
 **BCS 4103 – Advanced Database Systems**
 
 **Project Title**
 
-Optimizing PostgreSQL Database for Oracle Cloud (OCI) & Node.js REST API
+Optimizing PostgreSQL Database for Cloud Deployment & Node.js REST API Architecture
 
 **Course Lecturer**
 
 Cecilia
 
-**Group Members**
+### Group Members
 
-- BOBITLMR145324 - Samuel Mutuku Ngina
-- BOBITLMR127024 - Alvin Kuria Macharia
-- BOBITLMR539523 -EMMANUEL LANGAT
-- 
-- 
+- **BOBITLMR145324** — Samuel Mutuku Ngina
+- **BOBITLMR127024** — Alvin Kuria Macharia
+- **BOBITLMR539523** — Emmanuel Langat
 
 ---
 
 # 📄 License
 
-This project was developed for academic purposes as part of the **BCS 4103 Advanced Database Systems** course.
+This repository was developed for **academic evaluation** under the **BCS 4103 – Advanced Database Systems** curriculum.
 
 ---
 
-## ⭐ Project Summary
+## ⭐ Acknowledgements
 
-This project demonstrates the design and implementation of a scalable e-commerce REST API using **Node.js**, **Express.js**, and **PostgreSQL**, with a strong focus on database optimization through indexing, JSONB support, stored procedures, triggers, connection pooling, and large-scale performance benchmarking. The application is fully documented with Swagger UI and validated using automated Postman testing.
+- UCI Machine Learning Repository
+- PostgreSQL
+- Node.js
+- Express.js
+- Swagger
+- Postman
+- Render
+
+---
+
+## 📬 Contact
+
+For questions regarding this academic project, please contact any of the listed project members or open an issue within the repository.
