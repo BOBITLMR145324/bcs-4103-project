@@ -58,15 +58,17 @@ const initDB = async () => {
 
 initDB();
 
-// --- GLOBAL DATABASE STATS ENDPOINT ---
+// --- API ENDPOINT ANNOTATIONS & HANDLERS ---
+
 /**
  * @openapi
  * /api/products/stats:
  *   get:
  *     summary: Retrieve total records, average balance, and total portfolio value
+ *     tags: [Analytics]
  *     responses:
  *       200:
- *         description: Global database metrics
+ *         description: Live database statistics retrieved successfully
  */
 app.get('/api/products/stats', async (req, res) => {
   try {
@@ -84,7 +86,27 @@ app.get('/api/products/stats', async (req, res) => {
   }
 });
 
-// --- CSV EXPORT ENDPOINT ---
+/**
+ * @openapi
+ * /api/products/export:
+ *   get:
+ *     summary: Download a CSV export of products matching criteria
+ *     tags: [Export]
+ *     parameters:
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *         description: Search keyword
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *         description: Category filter
+ *     responses:
+ *       200:
+ *         description: Binary CSV file stream
+ */
 app.get('/api/products/export', async (req, res) => {
   try {
     const { search = '', category = 'ALL' } = req.query;
@@ -120,7 +142,73 @@ app.get('/api/products/export', async (req, res) => {
   }
 });
 
-// --- PAGINATED, SEARCHABLE, SORTABLE PRODUCTS ENDPOINT ---
+/**
+ * @openapi
+ * /api/products:
+ *   get:
+ *     summary: Get paginated, searched, and sorted products
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 100
+ *       - in: query
+ *         name: search
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: category
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: sortBy
+ *         schema:
+ *           type: string
+ *           enum: [created_at, price, name, sku]
+ *       - in: query
+ *         name: sortOrder
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *     responses:
+ *       200:
+ *         description: List of products with pagination metadata
+ *   post:
+ *     summary: Create a new product entry
+ *     tags: [Products]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [sku, name, price]
+ *             properties:
+ *               sku:
+ *                 type: string
+ *                 example: "BANK-CUST-999"
+ *               name:
+ *                 type: string
+ *                 example: "Term Deposit Prospect - EXECUTIVE"
+ *               price:
+ *                 type: number
+ *                 example: 15000.00
+ *               stock_quantity:
+ *                 type: integer
+ *                 example: 12
+ *               attributes:
+ *                 type: object
+ *     responses:
+ *       201:
+ *         description: Product created successfully
+ */
 app.get('/api/products', async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -176,18 +264,6 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-// --- INDIVIDUAL PRODUCT CRUD ENDPOINTS ---
-app.get('/api/products/:id', async (req, res) => {
-  try {
-    const { id } = req.params;
-    const result = await pool.query('SELECT * FROM products WHERE product_id = $1', [id]);
-    if (result.rows.length === 0) return res.status(404).json({ message: 'Product not found' });
-    res.json(result.rows[0]);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
 app.post('/api/products', async (req, res) => {
   try {
     const { sku, name, price, stock_quantity, attributes } = req.body;
@@ -197,6 +273,65 @@ app.post('/api/products', async (req, res) => {
       [sku, name, price, stock_quantity, attrValue]
     );
     res.status(201).json(result.rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/**
+ * @openapi
+ * /api/products/{id}:
+ *   get:
+ *     summary: Get a single product by UUID
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product record details
+ *       404:
+ *         description: Product not found
+ *   put:
+ *     summary: Update an existing product
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *     responses:
+ *       200:
+ *         description: Product updated successfully
+ *   delete:
+ *     summary: Delete a product
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Product deleted successfully
+ */
+app.get('/api/products/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM products WHERE product_id = $1', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ message: 'Product not found' });
+    res.json(result.rows[0]);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
