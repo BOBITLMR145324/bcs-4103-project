@@ -10,6 +10,32 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// --- SWAGGER UI CONFIGURATION ---
+const swaggerOptions = {
+  swaggerDefinition: {
+    openapi: '3.0.0',
+    info: {
+      title: 'Horizon FinTech Product Catalog API',
+      version: '1.0.0',
+      description: 'API documentation for Horizon Financial Institutional Deposit & Retail Portfolios',
+    },
+    servers: [
+      {
+        url: 'https://bcs-4103-ecom-api.onrender.com',
+        description: 'Production Server (Render)',
+      },
+      {
+        url: 'http://localhost:10000',
+        description: 'Local Server',
+      },
+    ],
+  },
+  apis: ['./app.js'],
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
 // --- AUTO-CREATE DATABASE TABLE ---
 const initDB = async () => {
   try {
@@ -32,12 +58,16 @@ const initDB = async () => {
 
 initDB();
 
-// Redirect base URL directly to Swagger documentation UI
-app.get('/', (req, res) => {
-  res.redirect('/api-docs');
-});
-
 // --- GLOBAL DATABASE STATS ENDPOINT ---
+/**
+ * @openapi
+ * /api/products/stats:
+ *   get:
+ *     summary: Retrieve total records, average balance, and total portfolio value
+ *     responses:
+ *       200:
+ *         description: Global database metrics
+ */
 app.get('/api/products/stats', async (req, res) => {
   try {
     const statsResult = await pool.query(`
@@ -76,7 +106,6 @@ app.get('/api/products/export', async (req, res) => {
 
     const result = await pool.query(query, queryParams);
 
-    // Build CSV Content
     let csv = 'SKU,Name,Balance (KES),Term (Months),Created At\n';
     result.rows.forEach(row => {
       csv += `"${row.sku}","${row.name.replace(/"/g, '""')}",${row.price},${row.stock_quantity},"${row.created_at}"\n`;
@@ -102,7 +131,6 @@ app.get('/api/products', async (req, res) => {
     const sortBy = req.query.sortBy || 'created_at';
     const sortOrder = req.query.sortOrder === 'asc' ? 'ASC' : 'DESC';
 
-    // Allowed sort columns to prevent SQL injection
     const allowedSortCols = ['created_at', 'price', 'name', 'sku'];
     const safeSortBy = allowedSortCols.includes(sortBy) ? sortBy : 'created_at';
 
@@ -121,12 +149,10 @@ app.get('/api/products', async (req, res) => {
 
     const whereSQL = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
 
-    // Count Total Filtered Matches
     const countQuery = `SELECT COUNT(*) FROM products ${whereSQL}`;
     const countResult = await pool.query(countQuery, queryParams);
     const totalProducts = parseInt(countResult.rows[0].count);
 
-    // Fetch Paginated Results
     const dataQueryParams = [...queryParams, limit, offset];
     const dataQuery = `
       SELECT * FROM products 
